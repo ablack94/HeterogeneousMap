@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <functional>
 
 typedef uint64_t HMapSettingId;
 
@@ -35,6 +36,16 @@ public:
 	BaseHMapSetting() = default;
 
 	virtual HMapSettingId getType() = 0;
+
+	template <typename T>
+	T* getValue() {
+		if (getType() == HMapSetting<T>::Type()) {
+			return static_cast<HMapSetting<T>*>(this)->getValue();
+		}
+		else {
+			throw std::exception("Bad type");
+		}
+	}
 };
 
 template <typename T>
@@ -76,6 +87,11 @@ public:
 		settings[name] = std::make_unique<HMapSetting<T>>(v);
 	}
 
+	template <typename T>
+	void set(std::string name, T value) {
+		settings[name] = std::make_unique<T>(value);
+	}
+
 	BaseHMapSetting* get(std::string name) {
 		return settings[name].get();
 	}
@@ -100,6 +116,10 @@ public:
 
 	HMapSettingId getId(std::string name) {
 		return settings[name]->getType();
+	}
+
+	std::map<std::string, std::unique_ptr<BaseHMapSetting>>& getSettings() {
+		return settings;
 	}
 
 protected:
